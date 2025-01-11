@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login and User Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const storedUsers = JSON.parse(localStorage.getItem("userList")) || [];
+            if (storedUsers.length === 0) {
+                // Save default admin user to localStorage
+                localStorage.setItem("userList", JSON.stringify([{ id: "214346", role: "admin" }]));
+            }
+        });
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center">
+    <!-- Login Page -->
+    <div id="login-page" class="bg-white p-8 rounded shadow-md w-full max-w-sm">
+        <h1 class="text-2xl font-bold text-center mb-6">Admin Login</h1>
+        <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+            <div>
+                <label for="ods-id" class="block text-gray-700 font-semibold">Enter ODS ID</label>
+                <input type="text" id="ods-id" class="w-full border px-4 py-2 rounded focus:outline-none focus:ring focus:border-blue-300" placeholder="Enter ODS ID">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring">
+                Login
+            </button>
+        </form>
+        <p id="error-message" class="mt-4 text-red-500 text-center hidden">Invalid ODS ID. Please try again.</p>
+    </div>
+
+    <!-- Admin Control Panel -->
+    <div id="admin-panel" class="hidden w-full max-w-4xl bg-white p-8 rounded shadow-md mt-8">
+        <!-- Header with Logout Button -->
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-2xl font-bold">Admin Control Panel</h1>
+            <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded">Logout</button>
+        </div>
+
+        <!-- User Management Section -->
+        <div id="user-management-section" class="mt-8">
+            <h2 class="text-xl font-semibold mb-4">User Management</h2>
+
+            <!-- Manual Entry for Adding Users -->
+            <table class="min-w-full bg-white border border-gray-300">
+                <thead>
+                <tr>
+                    <th class="py-2 px-4 border-b">User ID</th>
+                    <th class="py-2 px-4 border-b">Role</th>
+                    <th class="py-2 px-4 border-b">Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><input type="text" id="user-id-input" class="w-full border px-2 py-1" placeholder="Enter User ID"></td>
+                    <td>
+                        <select id="user-role-input" class="w-full border px-2 py-1">
+                            <option value="admin">Admin</option>
+                            <option value="user">User</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button onclick="addUser()" class="bg-blue-600 text-white px-3 py-1 rounded">Add User</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- User List Table -->
+            <table class="min-w-full bg-white mt-4">
+                <thead>
+                <tr>
+                    <th class="py-2 px-4 border-b">User ID</th>
+                    <th class="py-2 px-4 border-b">Role</th>
+                    <th class="py-2 px-4 border-b">Action</th>
+                </tr>
+                </thead>
+                <tbody id="user-list-body">
+                    <!-- Rows dynamically added here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function handleLogin(event) {
+            event.preventDefault();
+
+            const odsIdInput = document.getElementById("ods-id").value.trim();
+            const errorMessage = document.getElementById("error-message");
+
+            const userList = JSON.parse(localStorage.getItem("userList")) || [];
+            const user = userList.find(user => user.id === odsIdInput); // Compare as string
+
+            if (user) {
+                if (user.role === "admin") {
+                    window.location.href = "TEST2025.html"; // Redirect to Admin Panel
+                } else {
+                    alert("You are logged in as a User!");
+                }
+            } else {
+                errorMessage.classList.remove("hidden");
+            }
+        }
+
+        function logout() {
+            window.location.href = "login_page.html"; // Redirect to the login page
+        }
+
+        function addUser() {
+            const userId = document.getElementById("user-id-input").value.trim();
+            const userRole = document.getElementById("user-role-input").value;
+
+            if (!userId) {
+                alert("User ID is required!");
+                return;
+            }
+
+            const userList = JSON.parse(localStorage.getItem("userList")) || [];
+            const userExists = userList.some(user => user.id === userId);
+
+            if (userExists) {
+                alert("User ID already exists!");
+                return;
+            }
+
+            userList.push({ id: userId, role: userRole });
+            localStorage.setItem("userList", JSON.stringify(userList)); // Save updated user list
+            updateUserList(); // Refresh the User List table
+            alert("User added successfully!");
+
+            // Clear input fields
+            document.getElementById("user-id-input").value = "";
+        }
+
+        function updateUserList() {
+            const userList = JSON.parse(localStorage.getItem("userList")) || [];
+            const tbody = document.getElementById("user-list-body");
+            tbody.innerHTML = ""; // Clear existing rows
+
+            if (userList.length === 0) {
+                const row = document.createElement("tr");
+                const cell = document.createElement("td");
+                cell.colSpan = 3; // Adjust colspan to match table columns
+                cell.className = "py-4 px-4 text-center text-gray-500";
+                cell.textContent = "No Users Found";
+                row.appendChild(cell);
+                tbody.appendChild(row);
+                return;
+            }
+
+            userList.forEach((user, index) => {
+                const row = document.createElement("tr");
+                const userIdCell = document.createElement("td");
+                userIdCell.textContent = user.id;
+                userIdCell.className = "py-2 px-4 border-b";
+
+                const roleCell = document.createElement("td");
+                roleCell.textContent = user.role;
+                roleCell.className = "py-2 px-4 border-b";
+
+                const actionCell = document.createElement("td");
+                actionCell.className = "py-2 px-4 border-b text-center";
+
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "Delete";
+                deleteButton.className = "bg-red-500 text-white px-3 py-1 rounded";
+                deleteButton.onclick = () => {
+                    userList.splice(index, 1); // Remove user from the list
+                    localStorage.setItem("userList", JSON.stringify(userList)); // Update localStorage
+                    updateUserList(); // Refresh table
+                };
+
+                actionCell.appendChild(deleteButton);
+                row.appendChild(userIdCell);
+                row.appendChild(roleCell);
+                row.appendChild(actionCell);
+
+                tbody.appendChild(row);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", updateUserList);
+    </script>
+</body>
+</html>
